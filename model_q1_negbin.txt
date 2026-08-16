@@ -1,0 +1,26 @@
+Q1 robustness: negative binomial count model
+formula: phq9 ~ log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR
+n = 3847
+
+                     NegativeBinomial Regression Results                      
+==============================================================================
+Dep. Variable:                   phq9   No. Observations:                 3847
+Model:               NegativeBinomial   Df Residuals:                     3842
+Method:                           MLE   Df Model:                            4
+Date:                Sun, 16 Aug 2026   Pseudo R-squ.:                 0.01071
+Time:                        14:34:50   Log-Likelihood:                -8576.3
+converged:                       True   LL-Null:                       -8669.1
+Covariance Type:            nonrobust   LLR p-value:                 4.604e-39
+======================================================================================
+                         coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------
+Intercept              1.2262      0.084     14.667      0.000       1.062       1.390
+C(RIAGENDR)[T.2.0]     0.2925      0.044      6.683      0.000       0.207       0.378
+log_crp                0.1692      0.039      4.365      0.000       0.093       0.245
+RIDAGEYR              -0.0021      0.001     -1.738      0.082      -0.004       0.000
+INDFMPIR              -0.1401      0.014    -10.250      0.000      -0.167      -0.113
+alpha                  1.4866      0.048     30.733      0.000       1.392       1.581
+======================================================================================
+
+log_crp incidence rate ratio: 1.1844 [1.0977, 1.2779], p = 1.273e-05
+i.e. each unit of log(1 + hs-CRP) is associated with a 18.4% higher expected PHQ-9 score.

@@ -1,0 +1,33 @@
+Q3a: does the hs-CRP slope differ by sex?
+formula: phq9 ~ log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR + log_crp:C(RIAGENDR)
+n = 3847
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   phq9   R-squared:                       0.051
+Model:                            OLS   Adj. R-squared:                  0.050
+Method:                 Least Squares   F-statistic:                     42.82
+Date:                Sun, 16 Aug 2026   Prob (F-statistic):           4.48e-43
+Time:                        14:34:50   Log-Likelihood:                -10756.
+No. Observations:                3847   AIC:                         2.152e+04
+Df Residuals:                    3841   BIC:                         2.156e+04
+Df Model:                           5                                         
+Covariance Type:                  HC3                                         
+==============================================================================================
+                                 coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------------------
+Intercept                      3.3018      0.257     12.824      0.000       2.797       3.806
+C(RIAGENDR)[T.2.0]             0.9949      0.263      3.781      0.000       0.479       1.511
+log_crp                        0.5925      0.157      3.764      0.000       0.284       0.901
+log_crp:C(RIAGENDR)[T.2.0]    -0.1010      0.223     -0.453      0.650      -0.538       0.336
+RIDAGEYR                      -0.0037      0.003     -1.096      0.273      -0.010       0.003
+INDFMPIR                      -0.4205      0.038    -10.930      0.000      -0.496      -0.345
+==============================================================================
+Omnibus:                     1405.034   Durbin-Watson:                   1.975
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             4825.534
+Skew:                           1.852   Prob(JB):                         0.00
+Kurtosis:                       7.048   Cond. No.                         335.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)

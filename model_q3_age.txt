@@ -1,0 +1,35 @@
+Q3b: does the hs-CRP slope differ by age group?
+formula: phq9 ~ log_crp + C(age_group) + C(RIAGENDR) + INDFMPIR + log_crp:C(age_group)
+n = 3847
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   phq9   R-squared:                       0.053
+Model:                            OLS   Adj. R-squared:                  0.051
+Method:                 Least Squares   F-statistic:                     31.04
+Date:                Sun, 16 Aug 2026   Prob (F-statistic):           4.15e-42
+Time:                        14:34:50   Log-Likelihood:                -10752.
+No. Observations:                3847   AIC:                         2.152e+04
+Df Residuals:                    3839   BIC:                         2.157e+04
+Df Model:                           7                                         
+Covariance Type:                  HC3                                         
+=================================================================================================
+                                    coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------------------------
+Intercept                         3.2856      0.229     14.332      0.000       2.836       3.735
+C(age_group)[T.40-59]             0.1771      0.343      0.516      0.606      -0.496       0.850
+C(age_group)[T.60+]              -0.3755      0.303     -1.240      0.215      -0.969       0.218
+C(RIAGENDR)[T.2.0]                0.8839      0.129      6.868      0.000       0.632       1.136
+log_crp                           0.4210      0.189      2.233      0.026       0.051       0.791
+log_crp:C(age_group)[T.40-59]     0.1029      0.284      0.362      0.717      -0.454       0.659
+log_crp:C(age_group)[T.60+]       0.2051      0.266      0.771      0.441      -0.316       0.727
+INDFMPIR                         -0.4278      0.039    -10.889      0.000      -0.505      -0.351
+==============================================================================
+Omnibus:                     1402.379   Durbin-Watson:                   1.975
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             4802.812
+Skew:                           1.849   Prob(JB):                         0.00
+Kurtosis:                       7.035   Cond. No.                         29.1
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)

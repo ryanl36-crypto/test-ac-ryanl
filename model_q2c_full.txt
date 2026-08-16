@@ -1,0 +1,36 @@
+Q2 robustness full: adding BMI and sedentary minutes
+formula: phq9 ~ log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR + BMXBMI + PAD680
+n = 3787
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   phq9   R-squared:                       0.058
+Model:                            OLS   Adj. R-squared:                  0.056
+Method:                 Least Squares   F-statistic:                     36.87
+Date:                Sun, 16 Aug 2026   Prob (F-statistic):           1.15e-43
+Time:                        14:34:54   Log-Likelihood:                -10562.
+No. Observations:                3787   AIC:                         2.114e+04
+Df Residuals:                    3780   BIC:                         2.118e+04
+Df Model:                           6                                         
+Covariance Type:                  HC3                                         
+======================================================================================
+                         coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------
+Intercept              2.1525      0.349      6.170      0.000       1.469       2.836
+C(RIAGENDR)[T.2.0]     0.8781      0.129      6.799      0.000       0.625       1.131
+log_crp                0.2826      0.130      2.179      0.029       0.028       0.537
+RIDAGEYR              -0.0054      0.003     -1.596      0.110      -0.012       0.001
+INDFMPIR              -0.4393      0.040    -11.036      0.000      -0.517      -0.361
+BMXBMI                 0.0421      0.011      3.715      0.000       0.020       0.064
+PAD680                 0.0011      0.000      2.966      0.003       0.000       0.002
+==============================================================================
+Omnibus:                     1403.856   Durbin-Watson:                   1.972
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             4978.710
+Skew:                           1.867   Prob(JB):                         0.00
+Kurtosis:                       7.197   Cond. No.                     2.13e+03
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)
+[2] The condition number is large, 2.13e+03. This might indicate that there are
+strong multicollinearity or other numerical problems.

@@ -1,0 +1,36 @@
+Q2 full: adding DXA body fat % and sedentary minutes
+formula: phq9 ~ log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR + DXDTOPF + PAD680
+n = 1842
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   phq9   R-squared:                       0.055
+Model:                            OLS   Adj. R-squared:                  0.051
+Method:                 Least Squares   F-statistic:                     16.37
+Date:                Sun, 16 Aug 2026   Prob (F-statistic):           1.91e-18
+Time:                        14:34:53   Log-Likelihood:                -5154.5
+No. Observations:                1842   AIC:                         1.032e+04
+Df Residuals:                    1835   BIC:                         1.036e+04
+Df Model:                           6                                         
+Covariance Type:                  HC3                                         
+======================================================================================
+                         coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------
+Intercept              1.3678      0.449      3.046      0.002       0.488       2.248
+C(RIAGENDR)[T.2.0]     0.1435      0.259      0.555      0.579      -0.364       0.651
+log_crp                0.2039      0.193      1.058      0.290      -0.174       0.582
+RIDAGEYR               0.0067      0.008      0.809      0.419      -0.010       0.023
+INDFMPIR              -0.4220      0.061     -6.891      0.000      -0.542      -0.302
+DXDTOPF                0.0633      0.018      3.477      0.001       0.028       0.099
+PAD680                 0.0007      0.001      1.313      0.189      -0.000       0.002
+==============================================================================
+Omnibus:                      732.605   Durbin-Watson:                   1.988
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             2801.872
+Skew:                           1.956   Prob(JB):                         0.00
+Kurtosis:                       7.604   Cond. No.                     2.10e+03
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)
+[2] The condition number is large, 2.1e+03. This might indicate that there are
+strong multicollinearity or other numerical problems.

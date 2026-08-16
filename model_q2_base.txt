@@ -1,0 +1,32 @@
+Q2 base: Q1 model refitted on Sample B
+formula: phq9 ~ log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR
+n = 1842
+
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                   phq9   R-squared:                       0.046
+Model:                            OLS   Adj. R-squared:                  0.044
+Method:                 Least Squares   F-statistic:                     21.63
+Date:                Sun, 16 Aug 2026   Prob (F-statistic):           1.85e-17
+Time:                        14:34:53   Log-Likelihood:                -5162.8
+No. Observations:                1842   AIC:                         1.034e+04
+Df Residuals:                    1837   BIC:                         1.036e+04
+Df Model:                           4                                         
+Covariance Type:                  HC3                                         
+======================================================================================
+                         coef    std err          z      P>|z|      [0.025      0.975]
+--------------------------------------------------------------------------------------
+Intercept              2.7444      0.331      8.303      0.000       2.097       3.392
+C(RIAGENDR)[T.2.0]     0.7870      0.187      4.212      0.000       0.421       1.153
+log_crp                0.5590      0.161      3.468      0.001       0.243       0.875
+RIDAGEYR               0.0112      0.008      1.387      0.166      -0.005       0.027
+INDFMPIR              -0.3974      0.059     -6.757      0.000      -0.513      -0.282
+==============================================================================
+Omnibus:                      733.607   Durbin-Watson:                   1.985
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             2780.695
+Skew:                           1.964   Prob(JB):                         0.00
+Kurtosis:                       7.560   Cond. No.                         158.
+==============================================================================
+
+Notes:
+[1] Standard Errors are heteroscedasticity robust (HC3)

@@ -1,9 +1,13 @@
+"""
+CSE 163 Final Project - data module.
+
+Loads the six NHANES 2017-2018 transport files, merges them on SEQN,
+cleans them, and builds the three per-question analytic samples. The
+figures and regression models live in analysis.py.
+"""
 import pandas as pd
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
 # changes the directory assuming that the user has all of the files in the
 # same folder as the py file
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +18,7 @@ DPQ_COLUMNS = [f"DPQ{n:03d}" for n in range(10, 100, 10)]
 # Dictionary with each file name as the key and a list of columns needed from
 # each file
 COLUMNS = {
-    'DEMO_J.xpt': ['SEQN', 'RIDAGEYR', 'RIAGENDR', 'INDFMPIR', 'RIDRETH3'],
+    'DEMO_J.xpt': ['SEQN', 'RIDAGEYR', 'RIAGENDR', 'INDFMPIR'],
     'HSCRP_J.xpt': ['SEQN', 'LBXHSCRP'],
     'DPQ_J.xpt': ['SEQN'] + DPQ_COLUMNS,
     'DXX_J.xpt': ['SEQN', 'DXDTOPF'],
@@ -162,145 +166,41 @@ def trim_and_log_crp(data: pd.DataFrame) -> pd.DataFrame:
     return data
 
 
-def plot_hscrp(data: pd.DataFrame) -> None:
+def prepare_data(folder_path: str) -> pd.DataFrame:
     """
-    Saves a two-panel histogram comparing raw (trimmed) hs-CRP against its
-    log transform, justifying the transform. Assumes trim_and_log_crp has
-    already been applied.
+    Runs the whole cleaning pipeline on the six .xpt files in folder_path
+    and returns the adult (18+) merged table with phq9 and log_crp added.
+
+    The order here is load-bearing. Missingness is counted on the full
+    merged table before any rows are dropped, because it is required
+    report evidence that cannot be recovered afterwards. hs-CRP is
+    trimmed and logged before the samples are built so that all three
+    samples inherit the same transformed variable.
     """
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    axes[0].hist(data['LBXHSCRP'].dropna(), bins=30)
-    axes[0].set_title('hs-CRP, raw (trimmed > 10 mg/L)')
-    axes[0].set_xlabel('mg/L')
-    axes[1].hist(data['log_crp'].dropna(), bins=30)
-    axes[1].set_title('hs-CRP, log-transformed')
-    axes[1].set_xlabel('log(1 + mg/L)')
-    fig.tight_layout()
-    fig.savefig(os.path.join(DIR, 'plot_hscrp.png'))
-    plt.close(fig)
-    return data
-
-
-def plot_phq9(data: pd.DataFrame) -> None:
-    """
-    Saves a histogram of PHQ-9 total scores, showing the floor-at-zero
-    right skew.
-    """
-    fig, ax = plt.subplots()
-    ax.hist(data['phq9'].dropna(), bins=range(0, 29))
-    ax.set_title('PHQ-9 total score distribution')
-    ax.set_xlabel('PHQ-9 score (0-27)')
-    ax.set_ylabel('count')
-    fig.savefig(os.path.join(DIR, 'plot_phq9.png'))
-    plt.close(fig)
-
-
-def plot_crp_vs_phq9(data: pd.DataFrame) -> None:
-    """
-    Saves a scatter plot of log-transformed hs-CRP against PHQ-9 score,
-    the core relationship for research question 1.
-    """
-    fig, ax = plt.subplots()
-    ax.scatter(data['log_crp'], data['phq9'], alpha=0.3, s=10)
-    ax.set_title('log(hs-CRP) vs PHQ-9 score')
-    ax.set_xlabel('log(1 + hs-CRP)')
-    ax.set_ylabel('PHQ-9 score')
-    fig.savefig(os.path.join(DIR, 'plot_crp_vs_phq9.png'))
-    plt.close(fig)
-
-
-def plot_dxa_missingness(data: pd.DataFrame) -> None:
-    """
-    Compares age and BMI distributions between adults with a valid DXA
-    scan and those without, as evidence DXA missingness is non-random
-    (skews toward younger, leaner participants).
-    """
-    has_dxa = data['DXDTOPF'].notna()
-    fig, axes = plt.subplots(1, 2, figsize=(10, 4))
-    axes[0].hist(
-        data.loc[has_dxa, 'RIDAGEYR'], bins=20, alpha=0.5, label='has DXA')
-    axes[0].hist(
-        data.loc[~has_dxa, 'RIDAGEYR'], bins=20, alpha=0.5,
-        label='missing DXA')
-    axes[0].set_title('Age by DXA availability')
-    axes[0].set_xlabel('age')
-    axes[0].legend()
-    axes[1].hist(
-        data.loc[has_dxa, 'BMXBMI'].dropna(), bins=20, alpha=0.5,
-        label='has DXA')
-    axes[1].hist(
-        data.loc[~has_dxa, 'BMXBMI'].dropna(), bins=20, alpha=0.5,
-        label='missing DXA')
-    axes[1].set_title('BMI by DXA availability')
-    axes[1].set_xlabel('BMI')
-    axes[1].legend()
-    fig.tight_layout()
-    fig.savefig(os.path.join(DIR, 'plot_dxa_missingness.png'))
-    plt.close(fig)
-
-
-def fit_q1_model(data: pd.DataFrame):
-    """
-    Fits the Q1 model (phq9 ~ log_crp + age + sex + income) with
-    statsmodels, saves a residuals-vs-fitted plot, a Q-Q plot, and a
-    predictor correlation matrix as Result Validity assumption checks.
-    """
-    model = smf.ols(
-        'phq9 ~ log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR', data=data
-        ).fit()
-    print(model.summary())
-
-    fig, ax = plt.subplots()
-    ax.scatter(model.fittedvalues, model.resid, alpha=0.3, s=10)
-    ax.axhline(0, color='red', linestyle='--')
-    ax.set_title('Residuals vs fitted values')
-    ax.set_xlabel('fitted values')
-    ax.set_ylabel('residuals')
-    fig.savefig(os.path.join(DIR, 'plot_residuals.png'))
-    plt.close(fig)
-
-    qq_fig = sm.qqplot(model.resid, line='s')
-    qq_fig.savefig(os.path.join(DIR, 'plot_qq.png'))
-    plt.close(qq_fig)
-
-    corr = data[['log_crp', 'RIDAGEYR', 'INDFMPIR']].corr()
-    corr.to_csv(os.path.join(DIR, 'predictor_correlation.csv'))
-    return model
-
-
-def main():
-    data = load_data(DIR)
+    data = load_data(folder_path)
     data = merge_all_files(data)
-    print(data.shape)
+    print('Merged table:', data.shape)
     count_missing(data, 'missingness.csv')
 
     data = filter_age(data)
-    print(len(data))
+    print('Adults 18+:', len(data))
     count_missing(data, 'missing_adults.csv')
 
     data['PAD680'] = data['PAD680'].replace([7777, 9999], np.nan)
     data[DPQ_COLUMNS] = recode_phq9(data)
     data = score_phq9(data)
     data = trim_and_log_crp(data)
+    return data
 
-    plot_dxa_missingness(data)
 
-    sampleA_data = sampleA(data)
-    print(sampleA_data.shape)
-    count_missing(sampleA_data, 'missing_sampleA.csv')
-    describe_sample(sampleA_data, 'sampleA')
-    plot_hscrp(sampleA_data)
-    plot_phq9(sampleA_data)
-    plot_crp_vs_phq9(sampleA_data)
-    fit_q1_model(sampleA_data)
-
-    sampleB_data = sampleB(data)
-    print(sampleB_data.shape)
-    count_missing(sampleB_data, 'missing_sampleB.csv')
-    describe_sample(sampleB_data, 'sampleB')
-
-    sampleC_data = sampleC(data)
-    print(sampleC_data.shape)
+def main():
+    data = prepare_data(DIR)
+    builders = {'sampleA': sampleA, 'sampleB': sampleB, 'sampleC': sampleC}
+    for name in builders:
+        sample = builders[name](data)
+        print(f'{name}: {sample.shape}')
+        count_missing(sample, f'missing_{name}.csv')
+        describe_sample(sample, name)
 
 
 if __name__ == '__main__':

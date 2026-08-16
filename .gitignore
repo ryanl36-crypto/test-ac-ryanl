@@ -1,3 +1,6 @@
 *.xpt
 __pycache__/
 *.pyc
+
+# Session working notes, not a course deliverable
+HANDOFF.md
