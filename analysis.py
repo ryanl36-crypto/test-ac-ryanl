@@ -450,11 +450,7 @@ def fit_q3_model(data: pd.DataFrame) -> tuple[ResultsWrapper,
     return sex_model, age_model
 
 
-def main() -> None:
-    """
-    Runs the whole analysis: builds the three samples from the cleaned
-    data, then saves every figure and fits every model the report cites.
-    """
+def main():
     data = prepare_data(DIR)
     plot_dxa_missingness(data)
 

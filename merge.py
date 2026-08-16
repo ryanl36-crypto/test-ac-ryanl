@@ -196,11 +196,7 @@ def prepare_data(folder_path: str) -> pd.DataFrame:
     return data
 
 
-def main() -> None:
-    """
-    Runs the cleaning pipeline and saves the missingness counts and
-    summary tables for each of the three analytic samples.
-    """
+def main():
     data = prepare_data(DIR)
     builders = {'sampleA': sampleA, 'sampleB': sampleB, 'sampleC': sampleC}
     for name in builders:
