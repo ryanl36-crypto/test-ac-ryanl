@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from statsmodels.base.wrapper import ResultsWrapper
 
 from merge import DIR, prepare_data, sampleA, sampleB, sampleC
 
@@ -31,10 +32,12 @@ BASE_TERMS = 'log_crp + RIDAGEYR + C(RIAGENDR) + INDFMPIR'
 AGE_GROUP_TERMS = 'log_crp + C(age_group) + C(RIAGENDR) + INDFMPIR'
 
 
-def save_figure(fig, filename: str) -> None:
+def save_figure(fig: plt.Figure, filename: str) -> None:
     """
-    Saves a figure to the project folder at 150 dpi with a tight layout.
-    Centralised so every figure in the report is saved the same way.
+    Saves the given figure into the project folder under filename, at the
+    150 dpi the report needs. Centralised so every figure is saved the
+    same way, and closed afterwards so repeated calls do not accumulate
+    open figures.
     """
     fig.tight_layout()
     fig.savefig(os.path.join(DIR, filename), dpi=150)
@@ -160,7 +163,8 @@ def plot_bodyfat(data: pd.DataFrame) -> None:
     save_figure(fig, 'plot_bodyfat.png')
 
 
-def plot_interactions(data: pd.DataFrame, sex_model, age_model) -> None:
+def plot_interactions(data: pd.DataFrame, sex_model: ResultsWrapper,
+                      age_model: ResultsWrapper) -> None:
     """
     Q3 figure. Plots the model-implied PHQ-9 slope on log(hs-CRP)
     separately by sex and by age group, over the observed data in grey.
@@ -200,12 +204,11 @@ def plot_interactions(data: pd.DataFrame, sex_model, age_model) -> None:
     save_figure(fig, 'plot_interactions.png')
 
 
-def model_diagnostics(model, name: str) -> None:
+def model_diagnostics(model: ResultsWrapper, name: str) -> None:
     """
-    Saves the two Result Validity assumption checks for a fitted model: a
-    residuals-vs-fitted plot (constant variance) and a Q-Q plot of the
-    residuals (normality). sm.qqplot is given an explicit axis so the
-    figure can be titled - called without one it builds its own figure.
+    Saves the two Result Validity assumption checks for a fitted model,
+    labelled with name: a residuals-vs-fitted plot for constant variance,
+    and a Q-Q plot of the residuals for normality.
     """
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.scatter(model.fittedvalues, model.resid, alpha=0.3, s=10)
@@ -216,15 +219,19 @@ def model_diagnostics(model, name: str) -> None:
     save_figure(fig, f'plot_residuals_{name}.png')
 
     fig, ax = plt.subplots(figsize=(8, 5))
+    # qqplot builds its own figure unless handed an axis, and a figure it
+    # builds itself cannot be titled afterwards.
     sm.qqplot(model.resid, line='s', ax=ax)
     ax.set_title(f'Q-Q plot of residuals, {name}')
     save_figure(fig, f'plot_qq_{name}.png')
 
 
-def fit_model(formula: str, data: pd.DataFrame, label: str, slug: str):
+def fit_model(formula: str, data: pd.DataFrame, label: str,
+              slug: str) -> ResultsWrapper:
     """
-    Fits `formula` by OLS with HC3 heteroscedasticity-robust standard
-    errors and saves the summary to a text file for the report.
+    Fits formula by OLS with HC3 heteroscedasticity-robust standard errors
+    and returns the fitted model. Prints the summary under label and saves
+    it to model_<slug>.txt for the report.
 
     HC3 is used because the PHQ-9 floor at zero makes the residual
     variance clearly non-constant. It leaves the coefficients untouched
@@ -241,7 +248,8 @@ def fit_model(formula: str, data: pd.DataFrame, label: str, slug: str):
     return model
 
 
-def report_attenuation(base, full, label: str) -> None:
+def report_attenuation(base: ResultsWrapper, full: ResultsWrapper,
+                       label: str) -> None:
     """
     Prints how much the log_crp coefficient moves once the extra controls
     are added. Both models are fitted on the same sample, so the change is
@@ -258,19 +266,18 @@ def report_attenuation(base, full, label: str) -> None:
     print(f'change: {change:+.1f}%')
 
 
-def test_interaction(model, prefix: str) -> None:
+def test_interaction(model: ResultsWrapper, prefix: str) -> None:
     """
-    Runs a joint Wald test that every interaction coefficient starting
-    with `prefix` is zero at once. A single p value is needed because the
-    age-group interaction spans two coefficients, and testing them one at
-    a time would inflate the chance of a false positive.
-
-    The constraint matrix is built by hand rather than from a formula
-    string because the coefficient names contain brackets and hyphens
-    that the string parser would misread.
+    Prints a joint Wald test of the null that every coefficient in model
+    whose name starts with prefix is zero at once. One combined p value is
+    needed because the age-group interaction spans two coefficients, and
+    testing them separately would inflate the chance of a false positive.
     """
     names = list(model.params.index)
     terms = [n for n in names if n.startswith(prefix)]
+    # The constraint matrix is built directly rather than from a formula
+    # string, because coefficient names such as log_crp:C(age_group)[T.60+]
+    # contain brackets and hyphens the string parser would misread.
     constraint = np.zeros((len(terms), len(names)))
     for i, term in enumerate(terms):
         constraint[i, names.index(term)] = 1
@@ -280,17 +287,18 @@ def test_interaction(model, prefix: str) -> None:
     print(f'F = {float(result.fvalue):.4f}, p = {float(result.pvalue):.4g}')
 
 
-def fit_q1_model(data: pd.DataFrame):
+def fit_q1_model(data: pd.DataFrame) -> ResultsWrapper:
     """
     RQ1: does hs-CRP associate with PHQ-9, adjusting for age, sex and
-    income? Sample A.
+    income? Takes Sample A and returns the HC3 fit, alongside saving the
+    model's assumption-check figures and predictor correlation matrix.
 
     Null hypothesis: the coefficient on log_crp is zero.
     Test: two-sided t test on that coefficient in a multiple OLS model.
 
-    Fitted twice on purpose. The classical fit reproduces the standard
-    errors quoted in the Part 2 report; the HC3 fit is the Part 3 result
-    and is the one to report, since Part 2 documented the
+    Both a classical and an HC3 fit are reported. The classical one
+    reproduces the standard errors quoted in the Part 2 report; the HC3
+    one is the Part 3 result, since Part 2 documented the
     heteroscedasticity violation and promised robust errors here.
     """
     formula = f'phq9 ~ {BASE_TERMS}'
@@ -307,10 +315,12 @@ def fit_q1_model(data: pd.DataFrame):
     return robust
 
 
-def fit_count_model(data: pd.DataFrame, linear_model):
+def fit_count_model(data: pd.DataFrame,
+                    linear_model: ResultsWrapper) -> ResultsWrapper:
     """
-    Refits the Q1 model as a negative binomial count model on Sample A, as
-    a robustness check on the linear model's assumption violations.
+    Refits the Q1 model on Sample A as a negative binomial count model and
+    returns it, as a robustness check on the linear model's assumption
+    violations. linear_model is the fitted Q1 model to compare against.
 
     HC3 corrects the standard errors of a linear model but does not make a
     linear model appropriate for this outcome. PHQ-9 is a bounded integer
@@ -318,18 +328,13 @@ def fit_count_model(data: pd.DataFrame, linear_model):
     unbounded. The negative binomial instead models the mean on a log
     scale, treats predictors as multiplicative rather than additive, and
     lets the variance grow with the mean rather than assuming it is
-    constant - which is what the residual plot actually shows. Its
-    dispersion parameter is estimated by maximum likelihood alongside the
-    coefficients.
+    constant, which is what the residual plot actually shows.
 
-    The printed range of OLS fitted values is a related check. An
-    unbounded linear model can in principle predict negative scores, which
-    are impossible on a 0-27 scale. Here it does not, because income is
-    capped at 5.0 and so cannot drag a prediction below zero. Reporting the
-    check either way is more honest than assuming the answer.
-
-    exp(coefficient) is an incidence rate ratio: the multiplicative change
-    in the expected PHQ-9 score per one unit of log(1 + hs-CRP).
+    Also reports the range of the linear model's fitted values, since an
+    unbounded model can in principle predict negative scores that are
+    impossible on a 0-27 scale, and the effect on log_crp as an incidence
+    rate ratio: the multiplicative change in the expected PHQ-9 score per
+    one unit of log(1 + hs-CRP).
     """
     fitted = linear_model.fittedvalues
     below_zero = int((fitted < 0).sum())
@@ -359,20 +364,23 @@ def fit_count_model(data: pd.DataFrame, linear_model):
     return model
 
 
-def fit_q2_model(data: pd.DataFrame):
+def fit_q2_model(data: pd.DataFrame) -> tuple[ResultsWrapper,
+                                              ResultsWrapper]:
     """
     RQ2: does the hs-CRP association survive adjustment for body fat and
-    physical activity, or is it explained by adiposity? Sample B, DXA.
+    physical activity, or is it explained by adiposity? Takes Sample B and
+    returns the model without the adiposity controls and the model with
+    them, in that order.
 
     Null hypothesis: the coefficient on log_crp is zero once body fat %
     and sedentary minutes are also in the model.
     Test: two-sided t test on that coefficient, HC3 errors.
 
-    The Q1 model is refitted on Sample B first. Sample B is a different
-    and much smaller set of people than Sample A, so comparing the full
-    model against Sample A's coefficient would confuse a change of
-    controls with a change of sample. Comparing the two fits below holds
-    the sample fixed and varies only the controls.
+    Both models are fitted on Sample B. Sample B is a different and much
+    smaller set of people than Sample A, so comparing the full model
+    against Sample A's coefficient would confuse a change of controls with
+    a change of sample. Returning both fits from the same sample holds the
+    people fixed and varies only the controls.
     """
     base = fit_model(f'phq9 ~ {BASE_TERMS}', data,
                      'Q2 base: Q1 model refitted on Sample B', 'q2_base')
@@ -387,10 +395,12 @@ def fit_q2_model(data: pd.DataFrame):
     return base, full
 
 
-def fit_q2_robustness(data: pd.DataFrame):
+def fit_q2_robustness(data: pd.DataFrame) -> tuple[ResultsWrapper,
+                                                   ResultsWrapper]:
     """
-    RQ2 robustness check on Sample C, substituting BMI for DXA body fat.
-    Same null hypothesis and test as fit_q2_model.
+    RQ2 robustness check. Takes Sample C and returns the model without the
+    adiposity controls and the model with them, substituting BMI for DXA
+    body fat. Same null hypothesis and test as fit_q2_model.
 
     BMI is a cruder measure of adiposity, but it was measured on roughly
     twice as many adults and across the whole age range, so this check
@@ -410,10 +420,12 @@ def fit_q2_robustness(data: pd.DataFrame):
     return base, full
 
 
-def fit_q3_model(data: pd.DataFrame):
+def fit_q3_model(data: pd.DataFrame) -> tuple[ResultsWrapper,
+                                              ResultsWrapper]:
     """
-    RQ3: does the hs-CRP association differ by sex or by age group?
-    Sample A, which must already have an age_group column.
+    RQ3: does the hs-CRP association differ by sex or by age group? Takes
+    Sample A, which must already have an age_group column, and returns the
+    sex model and the age-group model in that order.
 
     Null hypothesis: every interaction coefficient between log_crp and the
     grouping variable is zero, i.e. the slope on log_crp is the same in
@@ -438,7 +450,11 @@ def fit_q3_model(data: pd.DataFrame):
     return sex_model, age_model
 
 
-def main():
+def main() -> None:
+    """
+    Runs the whole analysis: builds the three samples from the cleaned
+    data, then saves every figure and fits every model the report cites.
+    """
     data = prepare_data(DIR)
     plot_dxa_missingness(data)
 

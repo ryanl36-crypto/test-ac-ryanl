@@ -8,7 +8,7 @@ Dep. Variable:                   phq9   No. Observations:                 3847
 Model:               NegativeBinomial   Df Residuals:                     3842
 Method:                           MLE   Df Model:                            4
 Date:                Sun, 16 Aug 2026   Pseudo R-squ.:                 0.01071
-Time:                        14:34:50   Log-Likelihood:                -8576.3
+Time:                        14:45:22   Log-Likelihood:                -8576.3
 converged:                       True   LL-Null:                       -8669.1
 Covariance Type:            nonrobust   LLR p-value:                 4.604e-39
 ======================================================================================

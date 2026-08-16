@@ -169,17 +169,18 @@ def trim_and_log_crp(data: pd.DataFrame) -> pd.DataFrame:
 def prepare_data(folder_path: str) -> pd.DataFrame:
     """
     Runs the whole cleaning pipeline on the six .xpt files in folder_path
-    and returns the adult (18+) merged table with phq9 and log_crp added.
+    and returns the adult (18+) merged table, with phq9 and log_crp added
+    and every sentinel code recoded to NaN. The returned table is what the
+    three sample builders expect as input.
 
-    The order here is load-bearing. Missingness is counted on the full
-    merged table before any rows are dropped, because it is required
-    report evidence that cannot be recovered afterwards. hs-CRP is
-    trimmed and logged before the samples are built so that all three
-    samples inherit the same transformed variable.
+    Also saves missingness counts for the full merged table and for the
+    adult table as csv files, since both are required report evidence.
     """
     data = load_data(folder_path)
     data = merge_all_files(data)
     print('Merged table:', data.shape)
+    # Missingness has to be measured before any rows are dropped - it is
+    # required report evidence and cannot be recovered afterwards.
     count_missing(data, 'missingness.csv')
 
     data = filter_age(data)
@@ -189,11 +190,17 @@ def prepare_data(folder_path: str) -> pd.DataFrame:
     data['PAD680'] = data['PAD680'].replace([7777, 9999], np.nan)
     data[DPQ_COLUMNS] = recode_phq9(data)
     data = score_phq9(data)
+    # Trimming and logging happens here rather than per sample, so that
+    # all three samples inherit the same transformed variable.
     data = trim_and_log_crp(data)
     return data
 
 
-def main():
+def main() -> None:
+    """
+    Runs the cleaning pipeline and saves the missingness counts and
+    summary tables for each of the three analytic samples.
+    """
     data = prepare_data(DIR)
     builders = {'sampleA': sampleA, 'sampleB': sampleB, 'sampleC': sampleC}
     for name in builders:

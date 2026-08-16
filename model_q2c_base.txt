@@ -8,7 +8,7 @@ Dep. Variable:                   phq9   R-squared:                       0.050
 Model:                            OLS   Adj. R-squared:                  0.049
 Method:                 Least Squares   F-statistic:                     50.86
 Date:                Sun, 16 Aug 2026   Prob (F-statistic):           9.15e-42
-Time:                        14:34:54   Log-Likelihood:                -10577.
+Time:                        14:45:24   Log-Likelihood:                -10577.
 No. Observations:                3787   AIC:                         2.116e+04
 Df Residuals:                    3782   BIC:                         2.119e+04
 Df Model:                           4                                         
